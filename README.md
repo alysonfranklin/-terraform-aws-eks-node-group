@@ -94,7 +94,7 @@ locals {
 }
 
 module "eks_cluster" {
-  source = "git::https://github.com/alysonfranklin/terraform-aws-eks-node-group.git?ref=tags/0.43.2"
+  source = "git::https://github.com/alysonfranklin/terraform-aws-eks-cluster.git?ref=tags/0.43.2"
   # Recommends pinning every module to a specific version
 
   vpc_id     = module.vpc.vpc_id

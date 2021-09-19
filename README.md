@@ -93,37 +93,9 @@ locals {
   tags = { "kubernetes.io/cluster/${module.label.id}" = "shared" }
 }
 
-module "vpc" {
-  source = "cloudposse/vpc/aws"
-  # Cloud Posse recommends pinning every module to a specific version
-  # version = "x.x.x"
-
-  cidr_block = "172.16.0.0/16"
-
-  tags    = local.tags
-  context = module.label.context
-}
-
-module "subnets" {
-  source = "cloudposse/dynamic-subnets/aws"
-  # Cloud Posse recommends pinning every module to a specific version
-  # version = "x.x.x"
-
-  availability_zones   = var.availability_zones
-  vpc_id               = module.vpc.vpc_id
-  igw_id               = module.vpc.igw_id
-  cidr_block           = module.vpc.vpc_cidr_block
-  nat_gateway_enabled  = true
-  nat_instance_enabled = false
-
-  tags    = local.tags
-  context = module.label.context
-}
-
 module "eks_cluster" {
-  source = "cloudposse/eks-cluster/aws"
-  # Cloud Posse recommends pinning every module to a specific version
-  # version = "x.x.x"
+  source = "git::https://github.com/alysonfranklin/terraform-aws-eks-node-group.git?ref=tags/0.43.2"
+  # Recommends pinning every module to a specific version
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.subnets.public_subnet_ids
@@ -135,9 +107,8 @@ module "eks_cluster" {
 }
 
 module "eks_node_group" {
-  source = "cloudposse/eks-node-group/aws"
-  # Cloud Posse recommends pinning every module to a specific version
-  # version     = "x.x.x"
+  source = "git::https://github.com/alysonfranklin/terraform-aws-eks-node-group.git?ref=tags/0.26.0"
+  # Recommends pinning every module to a specific version
 
   instance_types        = [var.instance_type]
   subnet_ids            = module.subnets.public_subnet_ids

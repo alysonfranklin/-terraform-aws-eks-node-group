@@ -9,9 +9,9 @@ locals {
   have_ssh_key     = local.enabled && length(var.ec2_ssh_key_name) == 1
   ec2_ssh_key_name = local.have_ssh_key ? var.ec2_ssh_key_name[0] : null
 
-  need_remote_access_sg = local.enabled && local.have_ssh_key && local.generate_launch_template
+  need_ssh_access_sg = local.enabled && (local.have_ssh_key || length(var.ssh_access_security_group_ids) > 0) && local.generate_launch_template
 
-  get_cluster_data = local.enabled ? (local.need_cluster_kubernetes_version || local.need_bootstrap || local.need_remote_access_sg || length(var.associated_security_group_ids) > 0) : false
+  get_cluster_data = local.enabled ? (local.need_cluster_kubernetes_version || local.need_bootstrap || local.need_ssh_access_sg || length(var.associated_security_group_ids) > 0) : false
 
   autoscaler_enabled = var.cluster_autoscaler_enabled
   #
@@ -56,7 +56,7 @@ data "aws_eks_cluster" "this" {
 locals {
   ng = {
     cluster_name  = var.cluster_name
-    node_role_arn = local.create_role ? join("", aws_iam_role.default.*.arn) : var.node_role_arn[0]
+    node_role_arn = local.create_role ? join("", aws_iam_role.default.*.arn) : try(var.node_role_arn[0], null)
     # Keep sorted so that change in order does not trigger replacement via random_pet
     subnet_ids = sort(var.subnet_ids)
     # Always supply instance types via the node group, not the launch template,
@@ -93,6 +93,8 @@ resource "random_pet" "cbd" {
     instance_types = join(",", local.ng.instance_types)
     ami_type       = local.ng.ami_type
     capacity_type  = local.ng.capacity_type
+
+    launch_template_id = local.launch_template_id
   }
 }
 
